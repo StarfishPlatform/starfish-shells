@@ -24,3 +24,8 @@ def gen_profiles(count):
 
     for i in range(count):
         yield _gen_profile(fake)
+
+
+def noop_processing(profiles):
+    for profile in profiles:
+        yield profile

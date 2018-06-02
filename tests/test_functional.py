@@ -1,24 +1,33 @@
-from starfish_shell import ShellFactory
-from tests.utils import gen_profiles
+from starfish_shell import ShellFactory, Config
+from tests.utils import gen_profiles, noop_processing
 
 
-def test_shell_around_a_simple_functions():
-    # The function we are wrapping
-    def noop_processing(profiles):
-        for profile in profiles:
-            yield profile
+def test_shell_around_a_simple_functions(mock_starfish):
+    config = Config(mock_starfish.url, 'test_1', 'run_1')
+    starfish = ShellFactory(config)
+    shelled = starfish.shell_process(
+        noop_processing,
+        source='some-source-identifier',
+        destination='some-destination-identifier'
+    )
 
-    starfish = ShellFactory()
-    shelled = starfish.shell_process(noop_processing)
+    # that would be the moment where you store profiles somewhere else.
+    list(shelled(gen_profiles(10)))
 
-    list(shelled(gen_profiles(100)))
+    # The content has been consummed
+    assert shelled.starfish.consummed == 20
 
-    assert shelled.starfish.consummed == 100
+    # The server has been requested
+    logs = mock_starfish.logs
+    assert len(logs) == 20
+    assert 'some-source-identifier' in logs.sources
+    assert 'some-destination-identifier' in logs.destinations
 
 
-def test_shell_around_generators():
+def test_shell_around_generators(mock_starfish):
     # Arrange
-    starfish = ShellFactory()
+    config = Config(mock_starfish.url, 'test_3', 'run_1')
+    starfish = ShellFactory(config)
 
     def first_3(xs):
         for i, x in enumerate(xs):
@@ -28,9 +37,9 @@ def test_shell_around_generators():
     iterable = gen_profiles(10)
 
     # Act: Shell Processes
-    shelled_input = starfish.shell_iterator(iterable)
+    shelled_input = starfish.shell_iterator(iterable, source='my-shelled-source')
     processed = first_3(shelled_input)
-    shelled_result = starfish.shell_iterator(processed)
+    shelled_result = starfish.shell_iterator(processed, destination='my-shelled-destination')
     result = list(shelled_result)
 
     # Assert
