@@ -9,5 +9,6 @@ setup(
     author_email='laurent+starfish-shell@gmail.com',
     license='APACHE',
     packages=['starfish_shell'],
-    zip_safe=False
+    zip_safe=False,
+    install_requires=['requests']
 )
