@@ -17,8 +17,8 @@ class ShellFactory:
         self._logger = logging.getLogger('ShellFactory')
 
     @classmethod
-    def from_env(cls):
-        config = Config.from_env()
+    def from_env(cls, matcher=None):
+        config = Config.from_env(matcher=matcher)
         return ShellFactory(config)
 
     @property

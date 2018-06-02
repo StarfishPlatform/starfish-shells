@@ -90,7 +90,7 @@ class StarfishLogs:
 class MockStarfishAPI(MockServer):
     def __init__(self, port=None):
         super().__init__(port=port)
-        self.add_json_response('/logs/<service_id>/<run_id>', self._add_log, methods=('POST',))
+        self.add_json_response('/log/<serviceID>/<runID>', self._add_log, methods=('POST',))
         self.add_json_response(
             '/', lambda: {'status': 'ready'}
         )
@@ -100,9 +100,9 @@ class MockStarfishAPI(MockServer):
     def logs(self):
         return StarfishLogs(self._logs)
 
-    def _add_log(self, service_id, run_id):
+    def _add_log(self, serviceID, runID):
         json = request.get_json()
-        self._logs.append({'service_id': service_id, 'run_id': run_id, **json})
+        self._logs.append({'serviceID': serviceID, 'runID': runID, **json})
 
 
 @pytest.fixture

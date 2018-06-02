@@ -26,8 +26,8 @@ class TestShell:
 
         logs = conf.logs
         assert len(logs) == 2
-        assert check_log(logs[0])
-        assert check_log(logs[1])
+        assert check_log(logs[0], only_payload=True)
+        assert check_log(logs[1], only_payload=True)
 
 
 class TestShellProcess:

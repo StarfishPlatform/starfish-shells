@@ -42,7 +42,7 @@ class Config:
                 and self._run_id == other._run_id)
 
     @classmethod
-    def from_env(clss):
+    def from_env(clss, matcher=None):
         env = os.environ
         api_url = env['STARFISH_API_URL']
         service_id = env['STARFISH_SERVICE_ID']
@@ -52,22 +52,23 @@ class Config:
             # TODO: Add info logging when this case arise
             run_id = str(int(time.time() * 1000))
 
-        return Config(api_url, service_id, run_id)
+        c = Config(api_url, service_id, run_id)
+        if matcher:
+            c = c.with_matcher(matcher)
+        return c
 
     def build_query_for(self, profile, direction, storage):
         ts = str(int(time.time() * 1000))
         # TODO: reflect on whether this is good SoC (hint: probably not) and refactor
         payload = dict(
             userID=hash_id(self._profile_matcher(profile)),
-            runID=self._run_id,
-            serviceID=self._service_id,
             timestamp=ts,
             direction=direction,
             storage=storage
         )
 
         return dict(
-            url=f'{self._api_url}/logs/{self._service_id}/{self._run_id}',
+            url=f'{self._api_url}/log/{self._service_id}/{self._run_id}',
             json=payload
         )
 

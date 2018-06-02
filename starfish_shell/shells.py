@@ -24,9 +24,11 @@ class Shell:
         try:
             self.starfish.consumed += 1
             query = self._config.build_query_for(profile, direction, storage)
+            print("QUERY=", query)
 
             if self._config.is_online:
-                requests.post(**query)
+                r = requests.post(**query)
+                r.raise_for_status()
         except Exception as e:
             # TODO: logging
             self.starfish.failed = True

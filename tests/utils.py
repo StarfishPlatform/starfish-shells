@@ -4,7 +4,8 @@ import random
 
 from faker import Faker
 
-REQUIRED_FIELDS = {'timestamp', 'userID', 'storage', 'direction', 'serviceID', 'runID'}
+REQUIRED_PAYLOAD_FIELDS = {'timestamp', 'userID', 'storage', 'direction', }
+REQUIRED_FIELDS = REQUIRED_PAYLOAD_FIELDS | {'serviceID', 'runID'}
 
 
 def random_matcher(profile):
@@ -67,10 +68,12 @@ def env(**kwargs):
             os.environ[k] = v
 
 
-def check_log(log):
-    missing_fields = REQUIRED_FIELDS - set(log.keys())
+def check_log(log, only_payload=False):
+    required_fields = REQUIRED_PAYLOAD_FIELDS if only_payload else REQUIRED_FIELDS
+
+    missing_fields = required_fields - set(log.keys())
     assert not missing_fields, f'Missing fields: {missing_fields}'
 
-    for field in REQUIRED_FIELDS:
+    for field in required_fields:
         assert log[field], f'Empty field: {log[field]}'
     return True
