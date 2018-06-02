@@ -1,16 +1,11 @@
 import hashlib
 import os
-import random
 
 import time
 
 
 def default_matcher(x):
     return x['userID']
-
-
-def test_random(x):
-    return str(random.randint(0, 1000000))
 
 
 def hash_id(matched):
@@ -21,8 +16,14 @@ def hash_id(matched):
 
 PROFILE_MATCHERS = {
     'default': default_matcher,
-    'test_random': test_random
 }
+
+
+def get_profile_matcher(matcher):
+    if callable(matcher):
+        return matcher
+    else:
+        return PROFILE_MATCHERS[matcher]
 
 
 class Config:
@@ -30,7 +31,7 @@ class Config:
         self._api_url = api_url
         self._service_id = service_id
         self._run_id = run_id
-        self._profile_matcher = PROFILE_MATCHERS[profile_matcher]
+        self._profile_matcher = get_profile_matcher(profile_matcher)
 
     def __eq__(self, other):
         if not isinstance(other, Config):

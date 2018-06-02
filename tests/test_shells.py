@@ -1,7 +1,7 @@
 from starfish_shell.config import ConfigTestOffline
 from starfish_shell.shells import Shell, ShellIterator, ShellProcess, DIR_INPUT, DIR_OUTPUT
-from tests.utils import gen_profile, noop_processing, check_log
-from tests.utils import identity
+from tests.utils import gen_profile, noop_processing, check_log, random_failure_matcher
+from tests.utils import identity, random_matcher
 
 
 class TestShell:
@@ -32,23 +32,31 @@ class TestShell:
 
 class TestShellProcess:
     def test_is_a_function(self):
-        conf = ConfigTestOffline().with_matcher('test_random')
+        conf = ConfigTestOffline().with_matcher(random_matcher)
         shell = ShellProcess(identity, conf, source='source', destination='destination')
         assert shell([1, 2, 3])
 
     def test_output_equals_to_regular_function(self):
-        conf = ConfigTestOffline().with_matcher('test_random')
+        conf = ConfigTestOffline().with_matcher(random_matcher)
         shell = ShellProcess(identity, conf, source='source', destination='destination')
         assert list(shell([1, 2, 3])) == [1, 2, 3]
 
     def test_works_with_generator(self):
-        conf = ConfigTestOffline().with_matcher('test_random')
+        conf = ConfigTestOffline().with_matcher(random_matcher)
         shell = ShellProcess(noop_processing, conf, source='source', destination='destination')
         assert list(shell([1, 2, 3])) == [1, 2, 3]
+
+    def test_matcher_failure_wont_block_result(self):
+        conf = ConfigTestOffline().with_matcher(random_failure_matcher)
+        shell = ShellProcess(noop_processing, conf, source='source', destination='destination')
+
+        in_ = list(range(10000))
+        assert list(shell(in_)) == in_
+        assert shell.starfish.failed
 
 
 class TestShellIterator:
     def test_iterator_is_an_iterator(self):
-        conf = ConfigTestOffline().with_matcher('test_random')
+        conf = ConfigTestOffline().with_matcher(random_matcher)
         shell = ShellIterator([1, 2, 3], conf, source='some-source')
         assert list(shell)

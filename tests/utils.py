@@ -1,9 +1,20 @@
 import contextlib
 import os
+import random
 
 from faker import Faker
 
 REQUIRED_FIELDS = {'timestamp', 'userID', 'storage', 'direction', 'serviceID', 'runID'}
+
+
+def random_matcher(profile):
+    return str(random.randint(0, 10000))
+
+
+def random_failure_matcher(profile):
+    if random.random() > 0.5:
+        raise Exception("My matcher failed!")
+    return random_matcher(profile)
 
 
 def identity(xs):

@@ -1,6 +1,6 @@
 from starfish_shell import ShellFactory, Config
 from starfish_shell.config import ConfigTestOffline
-from tests.utils import gen_profiles, identity, env
+from tests.utils import gen_profiles, identity, env, random_matcher
 
 CONF_OFFLINE = ConfigTestOffline()
 
@@ -25,7 +25,7 @@ def test_build_factory_config_from_env():
 
 
 def test_the_function_i_wrap_doesnt_change_input_outputs():
-    factory = ShellFactory(CONF_OFFLINE.with_matcher('test_random'))
+    factory = ShellFactory(CONF_OFFLINE.with_matcher(random_matcher))
     shelled = factory.shell_process(identity, source='some-source', destination='some-dest')
     assert list(shelled([1, 2, 3])) == [1, 2, 3]
 

@@ -2,6 +2,12 @@ from starfish_shell import ShellFactory, Config
 from tests.utils import gen_profiles, noop_processing, env, check_log
 
 
+def first_3(xs):
+    for i, x in enumerate(xs):
+        if i < 3:
+            yield x
+
+
 def test_shell_around_a_simple_functions(mock_starfish):
     with env(STARFISH_API_URL=mock_starfish.url,
              STARFISH_SERVICE_ID='test_1',
@@ -34,10 +40,23 @@ def test_shell_around_generators(mock_starfish):
     config = Config(mock_starfish.url, 'test_3', 'run_1')
     starfish = ShellFactory(config)
 
-    def first_3(xs):
-        for i, x in enumerate(xs):
-            if i < 3:
-                yield x
+    iterable = gen_profiles(10)
+
+    # Act: Shell Processes
+    shelled_input = starfish.shell_iterator(iterable, source='my-shelled-source')
+    processed = first_3(shelled_input)
+    shelled_result = starfish.shell_iterator(processed, destination='my-shelled-destination')
+    list(shelled_result)  # Consume the result iterator
+
+    # Assert
+    assert shelled_input.starfish.consumed == 10
+    assert shelled_result.starfish.consumed == 3
+
+
+def test_some_failure_should_never_block_the_processing():
+    # Arrange
+    config = Config('http://wrong_url', 'test_3', 'run_1')
+    starfish = ShellFactory(config)
 
     iterable = gen_profiles(10)
 
@@ -45,8 +64,9 @@ def test_shell_around_generators(mock_starfish):
     shelled_input = starfish.shell_iterator(iterable, source='my-shelled-source')
     processed = first_3(shelled_input)
     shelled_result = starfish.shell_iterator(processed, destination='my-shelled-destination')
-    result = list(shelled_result)
+    result = list(shelled_result)  # Consume the result iterator
 
     # Assert
-    assert shelled_input.starfish.consumed == 10
-    assert shelled_result.starfish.consumed == 3
+    assert len(result) == 3
+    assert shelled_input.starfish.failed
+    assert shelled_result.starfish.failed
