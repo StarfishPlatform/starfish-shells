@@ -16,9 +16,9 @@ class Shell:
 
     def push(self, profile, direction, storage):
         self.starfish.consumed += 1
+        query = self._config.build_query_for(profile, direction, storage)
 
         if self._config.is_online:
-            query = self._config.build_query_for(profile, direction, storage)
             requests.post(**query)
 
         return True
@@ -43,7 +43,7 @@ class ShellIterator(Shell):
 
     def __next__(self):
         n = next(self._it)
-        self.push(self._it, direction=self._direction, storage=self._storage)
+        self.push(n, direction=self._direction, storage=self._storage)
         return n
 
 

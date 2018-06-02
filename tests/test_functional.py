@@ -1,27 +1,32 @@
 from starfish_shell import ShellFactory, Config
-from tests.utils import gen_profiles, noop_processing
+from tests.utils import gen_profiles, noop_processing, env, check_log
 
 
 def test_shell_around_a_simple_functions(mock_starfish):
-    config = Config(mock_starfish.url, 'test_1', 'run_1')
-    starfish = ShellFactory(config)
-    shelled = starfish.shell_process(
-        noop_processing,
-        source='some-source-identifier',
-        destination='some-destination-identifier'
-    )
+    with env(STARFISH_API_URL=mock_starfish.url,
+             STARFISH_SERVICE_ID='test_1',
+             STARFISH_RUN_ID='run_1'):
+        starfish = ShellFactory.from_env()
+        shelled = starfish.shell_process(
+            noop_processing,
+            source='some-source-identifier',
+            destination='some-destination-identifier'
+        )
 
-    # that would be the moment where you store profiles somewhere else.
-    list(shelled(gen_profiles(10)))
+        # that would be the moment where you store profiles somewhere else.
+        list(shelled(gen_profiles(10)))
 
-    # The content has been consumed
-    assert shelled.starfish.consumed == 20
+        # The content has been consumed
+        assert shelled.starfish.consumed == 20
 
-    # The server has been requested
-    logs = mock_starfish.logs
-    assert len(logs) == 20
-    assert 'some-source-identifier' in logs.sources
-    assert 'some-destination-identifier' in logs.destinations
+        # The server has been requested
+        logs = mock_starfish.logs
+        assert len(logs) == 20
+        assert 'some-source-identifier' in logs.sources
+        assert 'some-destination-identifier' in logs.destinations
+
+        for log in logs:
+            assert check_log(log)
 
 
 def test_shell_around_generators(mock_starfish):

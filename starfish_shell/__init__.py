@@ -1,4 +1,6 @@
-from .config import  Config, ConfigTestOffline
+from .config import Config
 from .core import ShellFactory
-from .shells import Shell, ShellIterator, ShellProcess
-from .shells import DIR_OUTPUT, DIR_INPUT
+
+# Noop, prevent "not used" cleanup
+Config = Config
+ShellFactory = ShellFactory

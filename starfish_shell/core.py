@@ -1,6 +1,8 @@
 import logging
+
 import time
 
+from starfish_shell import Config
 from .shells import ShellIterator
 from .shells import ShellProcess
 
@@ -13,6 +15,15 @@ class ShellFactory:
     def __init__(self, config):
         self._config = config
         self._logger = logging.getLogger('ShellFactory')
+
+    @classmethod
+    def from_env(cls):
+        config = Config.from_env()
+        return ShellFactory(config)
+
+    @property
+    def config(self):
+        return self._config
 
     def shell_process(self, f, source=None, destination=None):
         return ShellProcess(f, self._config, source=source, destination=destination)

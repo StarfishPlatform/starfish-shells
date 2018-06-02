@@ -6,7 +6,7 @@ import pytest
 import requests
 from flask import jsonify, request
 
-from starfish_shell import DIR_INPUT, DIR_OUTPUT
+from starfish_shell.shells import DIR_INPUT, DIR_OUTPUT
 
 
 def get_free_port():
@@ -70,6 +70,9 @@ class StarfishLogs:
 
     def __len__(self):
         return len(self._content)
+
+    def __iter__(self):
+        return iter(self._content)
 
     @property
     def sources(self):
