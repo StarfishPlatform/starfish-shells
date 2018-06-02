@@ -14,8 +14,8 @@ def test_shell_around_a_simple_functions(mock_starfish):
     # that would be the moment where you store profiles somewhere else.
     list(shelled(gen_profiles(10)))
 
-    # The content has been consummed
-    assert shelled.starfish.consummed == 20
+    # The content has been consumed
+    assert shelled.starfish.consumed == 20
 
     # The server has been requested
     logs = mock_starfish.logs
@@ -43,5 +43,5 @@ def test_shell_around_generators(mock_starfish):
     result = list(shelled_result)
 
     # Assert
-    assert shelled_input.starfish.consummed == 10
-    assert shelled_result.starfish.consummed == 3
+    assert shelled_input.starfish.consumed == 10
+    assert shelled_result.starfish.consumed == 3

@@ -4,18 +4,18 @@ DIR_INPUT = 'in'
 DIR_OUTPUT = 'out'
 
 
-class StarfishProperties:
+class Properties:
     def __init__(self):
-        self.consummed = 0
+        self.consumed = 0
 
 
 class Shell:
     def __init__(self, config):
-        self.starfish = StarfishProperties()
+        self.starfish = Properties()
         self._config = config
 
     def push(self, profile, direction, storage):
-        self.starfish.consummed += 1
+        self.starfish.consumed += 1
 
         if self._config.is_online:
             query = self._config.build_query_for(profile, direction, storage)

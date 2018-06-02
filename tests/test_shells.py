@@ -17,7 +17,7 @@ class TestShell:
         shell = Shell(CONF_OFFLINE)
         shell.push(profile, direction=DIR_INPUT, storage='some-storage')
 
-        assert shell.starfish.consummed == 1
+        assert shell.starfish.consumed == 1
 
 
 class TestShellProcess:

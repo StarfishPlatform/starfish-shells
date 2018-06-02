@@ -35,7 +35,7 @@ def test_i_can_wrap_iterators():
     assert shelled
 
 
-def test_the_iterator_can_be_consummed():
+def test_the_iterator_can_be_consumed():
     factory = ShellFactory(CONF_OFFLINE)
     iterator = gen_profiles(10)
     shelled = factory.shell_iterator(iterator, destination='some-destination')
