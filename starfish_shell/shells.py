@@ -1,4 +1,5 @@
 import logging
+from collections import namedtuple, defaultdict
 
 import requests
 
@@ -10,6 +11,10 @@ class Properties:
     def __init__(self):
         self.consumed = 0
         self.failed = False
+        self.queried = 0
+
+
+Query = namedtuple('Query', ['profile', 'direction', 'storage'])
 
 
 class Shell:
@@ -19,22 +24,53 @@ class Shell:
         self._logger = logging.getLogger(self.LOGGER_ID)
         self.starfish = Properties()
         self._config = config
+        self._waiting = []
+
+    def __del__(self):
+        if self._waiting:
+            self._logger.warning("Shell is being garbage collected without having been finalized!")
+
+    @property
+    def waiting(self):
+        return [*self._waiting]
 
     def push(self, profile, direction, storage):
-        try:
-            self.starfish.consumed += 1
-            query = self._config.build_query_for(profile, direction, storage)
-            print("QUERY=", query)
+        # KEEP THIS SIMPLE, catch happens in do_push
 
-            if self._config.is_online:
-                r = requests.post(**query)
-                r.raise_for_status()
-        except Exception as e:
-            # TODO: logging
-            self.starfish.failed = True
-            self._logger.error("push failed", e)
+        # TODO: apply matcher ASAP instead of keeping the full profile
+        self._waiting.append(Query(profile, direction, storage))
 
+        if len(self._waiting) >= self._config.batch_size:
+            self._do_push()
         return True
+
+    def finalize(self):
+        self._do_push()
+
+    def _do_push(self):
+        try:
+            batches = defaultdict(list)
+
+            for query in self._waiting:
+                batches[(query.storage, query.direction)].append(query.profile)
+
+            for (storage, direction), batch in batches.items():
+                query = self._config.build_query_for(batch, direction, storage)
+
+                print("QUERY=", query)
+                self.starfish.consumed += len(batch)
+                self.starfish.queried += 1
+
+                if self._config.is_online:
+                    r = requests.post(**query)
+                    r.raise_for_status()
+
+            # TODO: take care of errors occuring in the middle of this process
+            self._waiting = []
+        except Exception as e:
+            # TODO: loggin
+            self.starfish.failed = True
+            self._logger.error("push failed", exc_info=1)
 
 
 class ShellIterator(Shell):
@@ -57,10 +93,14 @@ class ShellIterator(Shell):
         return self
 
     def __next__(self):
-        n = next(self._it)
-        # Note: do not add behavior here, we protect users from errors within the `push` method.
-        self.push(n, direction=self._direction, storage=self._storage)
-        return n
+        try:
+            n = next(self._it)
+            # Note: do not add behavior here, we protect users from errors within the `push` method.
+            self.push(n, direction=self._direction, storage=self._storage)
+            return n
+        except StopIteration as e:
+            self.finalize()
+            raise
 
 
 class ShellProcess(Shell):
@@ -78,11 +118,14 @@ class ShellProcess(Shell):
         self._source = source
         self._destination = destination
 
-    def _generator(self, xs, direction, storage):
+    def _generator(self, xs, direction, storage, finalize=False):
         for x in xs:
             # Note: do not add behavior here, we protect users from errors within the `push` method.
             self.push(x, direction=direction, storage=storage)
             yield x
+
+        if finalize:
+            self.finalize()
 
     def __call__(self, *args, **kwargs):
         arg1, *rest = args
@@ -91,4 +134,4 @@ class ShellProcess(Shell):
         new_args = [new_arg_1, *rest]
         r = self._f(*new_args, **kwargs)
 
-        return self._generator(r, DIR_OUTPUT, self._destination)
+        return self._generator(r, DIR_OUTPUT, self._destination, finalize=True)

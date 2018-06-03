@@ -1,5 +1,5 @@
 from starfish_shell import ShellFactory, Config
-from tests.utils import gen_profiles, noop_processing, env, check_log
+from tests.utils import gen_profiles, noop_processing, env, check_server_log
 
 
 def first_3(xs):
@@ -32,7 +32,7 @@ def test_shell_around_a_simple_functions(mock_starfish):
         assert 'some-destination-identifier' in logs.destinations
 
         for log in logs:
-            assert check_log(log)
+            assert check_server_log(log)
 
 
 def test_shell_around_generators(mock_starfish):

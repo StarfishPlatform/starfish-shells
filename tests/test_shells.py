@@ -1,6 +1,6 @@
 from starfish_shell.config import ConfigTestOffline
 from starfish_shell.shells import Shell, ShellIterator, ShellProcess, DIR_INPUT, DIR_OUTPUT
-from tests.utils import gen_profile, noop_processing, check_log, random_failure_matcher
+from tests.utils import gen_profile, noop_processing, check_config_log, random_failure_matcher
 from tests.utils import identity, random_matcher
 
 
@@ -23,11 +23,26 @@ class TestShell:
         shell = Shell(conf)
         shell.push(profile, direction=DIR_INPUT, storage='some-storage')
         shell.push(profile, direction=DIR_OUTPUT, storage='some-storage')
+        shell.finalize()
 
         logs = conf.logs
         assert len(logs) == 2
-        assert check_log(logs[0], only_payload=True)
-        assert check_log(logs[1], only_payload=True)
+        assert check_config_log(logs[0])
+        assert check_config_log(logs[1])
+
+    def test_shell_pushes_per_batches(self):
+        profiles = [gen_profile() for _ in range(10)]
+        conf = ConfigTestOffline(batch_size=5)
+        shell = Shell(conf)
+
+        for profile in profiles:
+            shell.push(profile, direction=DIR_OUTPUT, storage='some-storage')
+
+        shell.finalize()
+
+        assert len(shell.waiting) == 0
+        assert shell.starfish.queried == 2
+        assert shell.starfish.consumed == 10
 
 
 class TestShellProcess:
@@ -50,7 +65,7 @@ class TestShellProcess:
         conf = ConfigTestOffline().with_matcher(random_failure_matcher)
         shell = ShellProcess(noop_processing, conf, source='source', destination='destination')
 
-        in_ = list(range(10000))
+        in_ = list(range(200))
         assert list(shell(in_)) == in_
         assert shell.starfish.failed
 

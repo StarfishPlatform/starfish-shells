@@ -1,6 +1,7 @@
 pytest
 pytest-mock
 pytest-watch
+pytest-timeout
 faker
 flask
 

@@ -27,11 +27,12 @@ def get_profile_matcher(matcher):
 
 
 class Config:
-    def __init__(self, api_url, service_id, run_id, profile_matcher='default'):
+    def __init__(self, api_url, service_id, run_id, profile_matcher='default', batch_size=20):
         self._api_url = api_url
         self._service_id = service_id
         self._run_id = run_id
         self._profile_matcher = get_profile_matcher(profile_matcher)
+        self.batch_size = batch_size
 
     def __eq__(self, other):
         if not isinstance(other, Config):
@@ -42,7 +43,7 @@ class Config:
                 and self._run_id == other._run_id)
 
     @classmethod
-    def from_env(clss, matcher=None):
+    def from_env(cls, matcher=None):
         env = os.environ
         api_url = env['STARFISH_API_URL']
         service_id = env['STARFISH_SERVICE_ID']
@@ -57,18 +58,18 @@ class Config:
             c = c.with_matcher(matcher)
         return c
 
-    def build_query_for(self, profile, direction, storage):
+    def build_query_for(self, profiles, direction, storage):
         ts = str(int(time.time() * 1000))
         # TODO: reflect on whether this is good SoC (hint: probably not) and refactor
         payload = dict(
-            userID=hash_id(self._profile_matcher(profile)),
+            userIDs=[hash_id(self._profile_matcher(profile)) for profile in profiles],
             timestamp=ts,
             direction=direction,
             storage=storage
         )
 
         return dict(
-            url=f'{self._api_url}/log/{self._service_id}/{self._run_id}',
+            url=f'{self._api_url}/logs/{self._service_id}/{self._run_id}',
             json=payload
         )
 
@@ -81,16 +82,17 @@ class Config:
 
 
 class ConfigTestOffline(Config):
-    def __init__(self, api_url=None, service_id=None, run_id=None, profile_matcher='default'):
+    def __init__(self, api_url=None, service_id=None, run_id=None, profile_matcher='default', batch_size=1):
         self.queries = []
         self.logs = []
         super().__init__(api_url or None,
                          service_id or 'some-service',
                          run_id or 'some-run',
-                         profile_matcher or 'default')
+                         profile_matcher=profile_matcher or 'default',
+                         batch_size=batch_size)
 
-    def build_query_for(self, profile, direction, storage):
-        query = super().build_query_for(profile, direction, storage)
+    def build_query_for(self, profiles, direction, storage):
+        query = super().build_query_for(profiles, direction, storage)
         self.queries.append(query)
         self.logs.append(query['json'])
         return query
