@@ -6,15 +6,14 @@ import requests
 DIR_INPUT = 'in'
 DIR_OUTPUT = 'out'
 
+Query = namedtuple('Query', ['profile', 'direction', 'storage'])
+
 
 class Properties:
     def __init__(self):
         self.consumed = 0
         self.failed = False
         self.queried = 0
-
-
-Query = namedtuple('Query', ['profile', 'direction', 'storage'])
 
 
 class Shell:
